@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>优衣库门店运营工具箱 v2.0</title>
+<style>
+  :root{
+    --red:#E60012;
+    --red-dark:#C4000F;
+    --ink:#1a1a1a;
+    --gray:#6b6b6b;
+    --line:#e8e8e8;
+    --bg:#fafafa;
+    --card:#ffffff;
+    --amber:#b8860b;
+    --green:#2e7d32;
+    --blue:#365F91;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,"PingFang SC","Microsoft YaHei","Helvetica Neue",sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{
+    background:var(--red);
+    color:#fff;
+    padding:28px 22px 22px;
+  }
+  .topbar .tag{
+    display:inline-block;
+    font-size:11px;
+    letter-spacing:1px;
+    background:rgba(255,255,255,.18);
+    padding:2px 10px;
+    border-radius:20px;
+    margin-bottom:10px;
+  }
+  .topbar h1{font-size:22px;font-weight:700;letter-spacing:.5px;}
+  .topbar .sub{font-size:13px;opacity:.92;margin-top:6px;}
+  .topbar .upgrade{
+    margin-top:12px;font-size:12px;background:rgba(255,255,255,.14);
+    border-radius:8px;padding:8px 12px;line-height:1.6;
+  }
+  .tabs{
+    display:flex;background:#fff;border-bottom:1px solid var(--line);
+    position:sticky;top:0;z-index:10;overflow-x:auto;
+  }
+  .tab{
+    flex:1;min-width:76px;text-align:center;padding:13px 4px;font-size:12px;color:var(--gray);
+    cursor:pointer;border-bottom:2px solid transparent;font-weight:500;
+    transition:color .15s;white-space:nowrap;
+  }
+  .tab.active{color:var(--red);border-bottom-color:var(--red);font-weight:700;}
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 60px;}
+  .panel{display:none;}
+  .panel.active{display:block;animation:fade .25s;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;}
+  .card h2{font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card h2 .num{background:var(--red);color:#fff;width:22px;height:22px;border-radius:6px;
+    display:inline-flex;align-items:center;justify-content:center;font-size:13px;flex:none;}
+  .muted{color:var(--gray);font-size:13px;}
+
+  /* 模块一：天气预判 */
+  .scene-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px;}
+  .scene{
+    border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center;
+    cursor:pointer;background:#fff;transition:.15s;
+  }
+  .scene:hover{border-color:var(--red);}
+  .scene.active{border-color:var(--red);background:#fff5f5;box-shadow:0 0 0 1px var(--red);}
+  .scene .ico{font-size:26px;}
+  .scene .nm{font-size:13px;font-weight:600;margin-top:6px;}
+  .scene .d{font-size:11px;color:var(--gray);margin-top:2px;}
+
+  .advice{border-left:3px solid var(--red);background:#fff8f8;border-radius:0 10px 10px 0;padding:14px;margin-top:12px;}
+  .advice .big{font-size:15px;font-weight:700;color:var(--red-dark);margin-bottom:10px;}
+  .advice .row{margin:8px 0;font-size:13.5px;}
+  .advice .row b{display:inline-block;min-width:52px;}
+  .advice .case{font-size:12px;color:var(--amber);background:#fffbf0;border:1px dashed #e3c98a;border-radius:8px;padding:8px 10px;margin-top:10px;}
+
+  /* 模块二：策略库 */
+  .strategy{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+  .strategy .s-text{font-size:14px;font-weight:600;}
+  .strategy .s-meta{font-size:12px;margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;}
+  .chip{font-size:11px;padding:2px 8px;border-radius:12px;background:#f1f1f1;color:var(--gray);}
+  .chip.effect{background:#fff1f1;color:var(--red-dark);}
+  .strategy .del{float:right;color:#bbb;cursor:pointer;font-size:16px;line-height:1;border:none;background:none;}
+  .strategy .del:hover{color:var(--red);}
+  .btn{
+    display:inline-block;background:var(--red);color:#fff;border:none;border-radius:8px;
+    padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;transition:.15s;
+  }
+  .btn:hover{background:var(--red-dark);}
+  .btn.ghost{background:#fff;color:var(--red);border:1px solid var(--red);}
+  .btn.ghost:hover{background:#fff5f5;}
+  .form{display:none;margin-top:12px;}
+  .form.show{display:block;}
+  .form input,.form textarea{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:14px;
+    margin-bottom:10px;font-family:inherit;
+  }
+  .form textarea{min-height:70px;resize:vertical;}
+
+  /* 模块三：问题定位 */
+  .check-item{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .check-item:last-child{border-bottom:none;}
+  .check-item label{font-size:14px;cursor:pointer;flex:1;}
+  .check-item input{width:18px;height:18px;margin-top:2px;accent-color:var(--red);flex:none;cursor:pointer;}
+  .diag{margin-top:14px;}
+  .diag .ok{color:var(--green);font-weight:600;font-size:14px;}
+  .diag .miss{background:#fff5f5;border:1px solid #f3c4c4;border-radius:10px;padding:12px 14px;margin-top:10px;}
+  .diag .miss h3{font-size:13px;color:var(--red-dark);margin-bottom:8px;}
+  .diag .miss li{margin:8px 0 8px 18px;font-size:13.5px;}
+
+  /* 模块四：店长点检 */
+  .dims{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+  .dim{font-size:11.5px;padding:4px 10px;border-radius:14px;background:#fff1f1;color:var(--red-dark);border:1px solid #f7c8c8;}
+  .prog{font-size:12px;color:var(--gray);font-weight:400;margin-left:auto;}
+  .progbar{height:6px;background:#f0f0f0;border-radius:3px;margin:10px 0 16px;overflow:hidden;}
+  .progfill{height:100%;background:var(--red);border-radius:3px;width:0;transition:width .25s;}
+  .shift{margin-bottom:16px;}
+  .shift .sh-head{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin-bottom:6px;}
+  .shift .sh-head .ico{font-size:18px;}
+  .shift-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:#fff;}
+  .shift-item.done{background:#f4fbf4;border-color:#cde7cd;}
+  .shift-item input{width:17px;height:17px;margin-top:2px;accent-color:var(--red);flex:none;cursor:pointer;}
+  .shift-item .si-main{flex:1;}
+  .shift-item .si-t{font-size:13.5px;font-weight:600;}
+  .shift-item .si-d{font-size:12px;color:var(--gray);margin-top:2px;}
+  .ability{border-top:1px dashed var(--line);margin-top:14px;padding-top:12px;}
+  .ability h3{font-size:13px;color:var(--red-dark);margin-bottom:8px;}
+  .ability .ab{font-size:13px;padding:6px 0;border-bottom:1px solid #f5f5f5;}
+  .ability .ab:last-child{border-bottom:none;}
+  .ability .ab b{color:var(--red-dark);}
+
+  /* 模块五：上下游市场 */
+  .sec{font-size:14px;font-weight:700;color:var(--blue);margin:4px 0 10px;display:flex;align-items:center;gap:8px;}
+  .kv{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #f5f5f5;font-size:13.5px;}
+  .kv:last-child{border-bottom:none;}
+  .kv b{flex:none;min-width:72px;color:var(--red-dark);}
+  .kv span{flex:1;color:var(--ink);}
+
+  .foot{text-align:center;font-size:11px;color:#b0b0b0;padding:20px 0;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="tag">门店运营 · 原型 v2.0</span>
+  <h1>优衣库门店运营工具箱</h1>
+  <div class="sub">让普通店员也能做出接近「超级店长」的判断</div>
+  <div class="upgrade">
+    <b>▲ 一面后的升级</b>：原版只解决「帮店员做营销」（好评话术 + 小红书模板）。升级后转向「帮店长做经营」——从「给模板」变成「预判 + 沉淀 + 诊断 + 点检 + 认知」五个模块。
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-p="p1">① 天气预判</div>
+  <div class="tab" data-p="p2">② 策略库</div>
+  <div class="tab" data-p="p3">③ 问题定位</div>
+  <div class="tab" data-p="p4">④ 店长点检</div>
+  <div class="tab" data-p="p5">⑤ 上下游·市场</div>
+</div>
+
+<div class="wrap">
+
+  <!-- 模块一：天气预判看板 -->
+  <div class="panel active" id="p1">
+    <div class="card">
+      <h2><span class="num">1</span>天气 · 需求预判看板</h2>
+      <p class="muted">选一个天气 / 客流场景，看门店该怎么备货、陈列、跟顾客说什么。</p>
+      <div class="scene-grid" id="sceneGrid"></div>
+      <div class="advice" id="adviceBox">
+        <div class="big" id="adviceTitle">点上面的场景，生成行动建议</div>
+        <div class="row" id="adviceStock"></div>
+        <div class="row" id="adviceDisplay"></div>
+        <div class="row" id="adviceScript"></div>
+        <div class="case" id="adviceCase"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>💡 为什么「提前预判」现在更值钱</h2>
+      <p class="muted" style="font-size:13.5px;">
+        服装制造端正往东南亚转移，供应链变长、补货变慢——预测错一次，就是实打实的销售损失。
+        所以「提前、准确地看懂天气与客流」这件事，价值比过去更高了。
+      </p>
+    </div>
+  </div>
+
+  <!-- 模块二：策略库 -->
+  <div class="panel" id="p2">
+    <div class="card">
+      <h2><span class="num">2</span>策略库 · 把「优秀」沉淀成「可复制的策略」</h2>
+      <p class="muted">优秀店员的动作，用销售数据验证后，变成一条条能照着做的标准动作。</p>
+      <div id="strategyList"></div>
+      <button class="btn ghost" id="showForm">+ 添加一条策略</button>
+      <div class="form" id="formBox">
+        <input type="text" id="fText" placeholder="策略内容，例如：降温前一天把保暖类挂到入口最显眼位">
+        <input type="text" id="fEffect" placeholder="验证效果，例如：保暖类环比 +40%">
+        <input type="text" id="fScene" placeholder="适用场景，例如：天气变化 / 连带销售 / 服务">
+        <button class="btn" id="saveStrategy">保存到策略库</button>
+        <button class="btn ghost" id="cancelForm">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模块三：问题定位 -->
+  <div class="panel" id="p3">
+    <div class="card">
+      <h2><span class="num">3</span>问题定位 · 让有问题的人知道自己差在哪</h2>
+      <p class="muted">对照策略库逐条自评，找出具体差在哪一步，而不是一句「多练练」。</p>
+      <div id="checkList"></div>
+      <button class="btn" id="runDiag">生成诊断</button>
+      <div class="diag" id="diagBox"></div>
+    </div>
+  </div>
+
+  <!-- 模块四：店长一日点检 -->
+  <div class="panel" id="p4">
+    <div class="card">
+      <h2><span class="num">4</span>店长一日点检看板</h2>
+      <p class="muted">超级店长每天盯的不是「几件衣服」，是这些经营点位——从进店到闭店，每一刻看什么、查什么，都对应一个经营判断。</p>
+      <div class="dims" id="dimList"></div>
+    </div>
+    <div class="card">
+      <h2>📋 今日点检清单 <span class="prog" id="progText">0 / 0</span></h2>
+      <div class="progbar"><div class="progfill" id="progFill"></div></div>
+      <div id="shiftList"></div>
+    </div>
+    <div class="card">
+      <h2>🧭 优衣库要的店长能力（UMC 四大能力）</h2>
+      <div class="ability">
+        <div class="ab"><b>赚钱的能力</b> —— 成为生意人：增收益、减开支，把店铺当自己的生意</div>
+        <div class="ab"><b>建设团队的能力</b> —— 成为领导者：招募、培养、激励，带人拿结果</div>
+        <div class="ab"><b>变革的能力</b> —— 成为创新者：不断改流程、提效率</div>
+        <div class="ab"><b>追求理想的能力</b> —— 成为有使命感的人：把顾客价值放在中心</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模块五：上下游 · 市场认知 -->
+  <div class="panel" id="p5">
+    <div class="card">
+      <h2><span class="num">5</span>上下游 · 市场认知</h2>
+      <p class="muted">懂店长每天干什么还不够，还要懂优衣库这条生意是怎么运转的——上游怎么造、下游怎么卖、市场往哪走。</p>
+    </div>
+    <div class="card">
+      <h3 class="sec">🏭 上游 · 供应链</h3>
+      <div class="kv"><b>SPA 模式</b><span>自己掌控「企划→面料→生产→物流→销售」全链条（1998 ABC 改革转型）</span></div>
+      <div class="kv"><b>机能面料</b><span>与东丽合作研发 HEATTECH / AIRism，靠科技面料做差异化</span></div>
+      <div class="kv"><b>生产转移</b><span>中国工厂 140→40 家；制造端正往东南亚转移，供应链变长、补货变慢</span></div>
+      <div class="kv"><b>库存周转</b><span>35 天（比行业快 1 倍）；爆款 48h 从 B 级升 SA 级紧急补单</span></div>
+    </div>
+    <div class="card">
+      <h3 class="sec">🏬 下游 · 门店 / 顾客</h3>
+      <div class="kv"><b>门店模型</b><span>仓储式卖场 + FR 试衣间；标准店约 660㎡，25 人一年卖 12 亿</span></div>
+      <div class="kv"><b>顾客服务</b><span>问库存：有货推荐搭配、缺货查附近店调货；总部每月 3000 电话 + 300 顾客洽谈</span></div>
+      <div class="kv"><b>DTC 转型</b><span>RFID 电子标签、自助收银、线上线下一体，门店变成数据入口</span></div>
+    </div>
+    <div class="card">
+      <h3 class="sec">📈 市场走向</h3>
+      <div class="kv"><b>增量转存量</b><span>从「多开店」转向「把店做深做精细」，数字化从锦上添花变生存必须</span></div>
+      <div class="kv"><b>平价优质</b><span>「买得起的好东西」：不是便宜，是同样品质做到更低价格</span></div>
+      <div class="kv"><b>机能消费</b><span>HEATTECH / AIRism 卖的是「功能」不是「款式」，抗周期更稳</span></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">优衣库门店运营工具箱 · 原型 v2.0 · 数据本地保存，不依赖外部接口</div>
+
+<script>
+/* ===== 模块一：天气 / 客流预判规则表 ===== */
+const weatherRules = {
+  cold_big: {
+    title: '大幅降温（降 8℃+）',
+    icon: '🥶',
+    stock: ['HEATTECH 发热内衣', '摇粒绒外套', '轻薄羽绒', '抓绒外套', '围巾手套'],
+    display: '保暖类全部挂到入口最显眼位，叠装墙换成保暖主推款，收银台旁加摆发热内衣小件。',
+    script: '「这波降温来得猛，发热内衣和羽绒今天不备、明天就断码，我先帮您挑件合适的。」',
+    case: '参考：今年国庆长沙断崖降温十几度，优衣库旗舰店外套被抢到卖空、断码，网传单日营业额冲到 159 万。'
+  },
+  cold_small: {
+    title: '小幅降温（降 3~8℃）',
+    icon: '🍂',
+    stock: ['摇粒绒外套', '针织衫', '轻薄羽绒', '长袖内搭'],
+    display: '摇粒绒和针织挂中岛显眼位，门口做「换季」主题陈列。',
+    script: '「最近早晚温差大，给您看件轻薄羽绒，热了能脱、冷了够暖。」',
+    case: ''
+  },
+  warm_up: {
+    title: '升温（升 5℃+）',
+    icon: '☀️',
+    stock: ['AIRism 凉感系列', '短袖', '薄款速干', '防晒'],
+    display: 'AIRism 和短袖挂通风处显眼位，门口换「清凉」主题。',
+    script: '「天一下热了，AIRism 凉感上身就不闷，您摸摸这面料。」',
+    case: ''
+  },
+  rainy: {
+    title: '阴雨 / 湿冷',
+    icon: '🌧️',
+    stock: ['防风外套', '速干系列', '可收纳便携外套'],
+    display: '防风/速干外套挂收银台附近，方便买单时连带推荐。',
+    script: '「今天这雨来得突然，这件防风外套能挡风又速干，顺手带上。」',
+    case: ''
+  },
+  storm: {
+    title: '台风 / 暴雨',
+    icon: '⛈️',
+    stock: ['防风防水外套', '速干系列', '可收纳便携外套', '雨具'],
+    display: '防风防水外套挂入口，速干系列集中陈列，雨具挂收银台旁。',
+    script: '「这种天出门最需要一件防水的，这件能挡雨又速干，随身带着不占地方。」',
+    case: ''
+  },
+  cold_winter: {
+    title: '持续低温（深冬）',
+    icon: '❄️',
+    stock: ['羽绒服', 'HEATTECH 高领', '羊毛大衣', '围巾手套'],
+    display: '羽绒做大面积主推陈列，HEATTECH 高领做叠装墙。',
+    script: '「深冬了，HEATTECH 高领做内搭，外头套件羽绒，一整天都暖和。」',
+    case: ''
+  },
+  crowd: {
+    title: '周末 / 节假日客流高峰',
+    icon: '🎉',
+    stock: ['应季爆款补足', '叠装墙主推款', '收银台加派人手'],
+    display: '应季爆款和主推款备足，叠装墙做满，收银台加人减排队。',
+    script: '「今天人多，您想找的这款我帮您确认下尺码和库存。」',
+    case: ''
+  }
+};
+
+const sceneGrid = document.getElementById('sceneGrid');
+for (const key in weatherRules) {
+  const r = weatherRules[key];
+  const div = document.createElement('div');
+  div.className = 'scene';
+  div.dataset.key = key;
+  div.innerHTML = `<div class="ico">${r.icon}</div><div class="nm">${r.title}</div><div class="d">点我看行动建议</div>`;
+  div.addEventListener('click', () => {
+    document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+    div.classList.add('active');
+    renderAdvice(key);
+  });
+  sceneGrid.appendChild(div);
+}
+
+function renderAdvice(key) {
+  const r = weatherRules[key];
+  document.getElementById('adviceTitle').textContent = r.icon + ' ' + r.title + ' → 门店行动建议';
+  document.getElementById('adviceStock').innerHTML = `<b>📦 备货</b> ${r.stock.map(x => '「'+x+'」').join(' · ')}`;
+  document.getElementById('adviceDisplay').innerHTML = `<b>🖼 陈列</b> ${r.display}`;
+  document.getElementById('adviceScript').innerHTML = `<b>💬 话术</b> ${r.script}`;
+  document.getElementById('adviceCase').textContent = r.case;
+}
+
+/* ===== 模块二：策略库（localStorage 持久化）===== */
+const STORE_KEY = 'uniqlo_strategies_v3';
+let strategies = loadStrategies();
+
+function defaultStrategies() {
+  return [
+    { text: '降温前一天，把保暖类（HEATTECH/摇粒绒/羽绒）从后仓调到入口最显眼位', effect: '保暖类环比 +40%', scene: '天气变化' },
+    { text: '雨天把防风/速干外套挂到收银台附近，买单时连带推荐', effect: '连带购买 +25%', scene: '天气变化' },
+    { text: '周末客流高峰做叠装陈列（标志性叠衣墙）', effect: '试穿转化 +15%', scene: '日常陈列' },
+    { text: '试衣间排队时，店员主动递内搭/配饰做连带推荐', effect: '连带率 +20%', scene: '连带销售' },
+    { text: '断码时主动帮客户查全国库存、调货', effect: '满意度显著提升', scene: '服务' },
+    { text: '新货靠前好位置，减价/不足货靠后陈列', effect: '动销更快', scene: '陈列规范' },
+    { text: '顾客问库存，有货就推荐搭配、缺货介绍类似款或查附近店', effect: '连带率提升', scene: '连带销售' },
+    { text: '橱窗每周换一次，模特穿着与陈列货品呼应', effect: '进店率提升', scene: '陈列规范' }
+  ];
+}
+function loadStrategies() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return defaultStrategies();
+}
+function saveStrategies() {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(strategies)); } catch (e) {}
+}
+function renderStrategies() {
+  const list = document.getElementById('strategyList');
+  list.innerHTML = '';
+  strategies.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'strategy';
+    div.innerHTML = `
+      <button class="del" data-i="${i}" title="删除">×</button>
+      <div class="s-text">${escapeHtml(s.text)}</div>
+      <div class="s-meta">
+        <span class="chip effect">${escapeHtml(s.effect)}</span>
+        <span class="chip">${escapeHtml(s.scene)}</span>
+      </div>`;
+    list.appendChild(div);
+  });
+  list.querySelectorAll('.del').forEach(btn => {
+    btn.addEventListener('click', () => {
+      strategies.splice(parseInt(btn.dataset.i), 1);
+      saveStrategies();
+      renderStrategies();
+    });
+  });
+}
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+document.getElementById('showForm').addEventListener('click', () => document.getElementById('formBox').classList.add('show'));
+document.getElementById('cancelForm').addEventListener('click', () => document.getElementById('formBox').classList.remove('show'));
+document.getElementById('saveStrategy').addEventListener('click', () => {
+  const text = document.getElementById('fText').value.trim();
+  const effect = document.getElementById('fEffect').value.trim();
+  const scene = document.getElementById('fScene').value.trim();
+  if (!text) { alert('策略内容不能为空'); return; }
+  strategies.unshift({ text, effect: effect || '待验证', scene: scene || '通用' });
+  saveStrategies();
+  document.getElementById('fText').value = '';
+  document.getElementById('fEffect').value = '';
+  document.getElementById('fScene').value = '';
+  document.getElementById('formBox').classList.remove('show');
+  renderStrategies();
+});
+
+/* ===== 模块三：问题定位 ===== */
+const checkItems = [
+  { text: '天气 / 客流变化前，有没有提前调整保暖/防风类陈列？', tip: '专项：把「天气预判看板」当作每日开店第一步，先看天气与客流再定陈列。' },
+  { text: '有没有在试衣间排队时做连带推荐？', tip: '专项：练习「递内搭/配饰」三句话术，把连带推荐做成固定动作。' },
+  { text: '有没有按标准做叠装陈列（叠衣墙）？', tip: '专项：对照叠装标准视频，每天练 10 分钟叠衣，做到「一抽不散」。' },
+  { text: '断码时有没有主动帮客户查库存、调货？', tip: '专项：熟记「查库存→调货→到店提醒」三步，宁可调货也不让客户空手走。' }
+];
+const checkList = document.getElementById('checkList');
+checkItems.forEach((item, i) => {
+  const div = document.createElement('div');
+  div.className = 'check-item';
+  div.innerHTML = `<input type="checkbox" id="ck${i}" data-i="${i}"><label for="ck${i}">${escapeHtml(item.text)}</label>`;
+  checkList.appendChild(div);
+});
+document.getElementById('runDiag').addEventListener('click', () => {
+  const missed = [];
+  checkItems.forEach((item, i) => {
+    if (!document.getElementById('ck' + i).checked) missed.push(item);
+  });
+  const box = document.getElementById('diagBox');
+  if (missed.length === 0) {
+    box.innerHTML = `<div class="diag"><p class="ok">✓ 全部做到，你已经接近「超级店长」的标准动作了。</p></div>`;
+  } else {
+    let html = `<div class="diag"><div class="miss"><h3>你差在这 ${missed.length} 步（不是「能力不行」，是「动作没做对」）：</h3><ul>`;
+    missed.forEach(m => { html += `<li><b>${escapeHtml(m.text)}</b><br>${escapeHtml(m.tip)}</li>`; });
+    html += '</ul></div></div>';
+    box.innerHTML = html;
+  }
+});
+
+/* ===== 模块四：店长一日点检看板 ===== */
+const dimensions = [
+  '销售进度(15分钟)', '货品调控(SA/B/C/D)', '人员调配(稼働计划)', '陈列规范(VMD)',
+  '细节规范(5S)', '收银管控', '动线布置(入口爆款)', '真实意见汲取',
+  '好评转化(试衣间)', '拣货(RFID)', '补货(天气+历史+商圈)'
+];
+const dimList = document.getElementById('dimList');
+dimensions.forEach(d => {
+  const span = document.createElement('span');
+  span.className = 'dim';
+  span.textContent = d;
+  dimList.appendChild(span);
+});
+
+const shiftData = [
+  {
+    time: '开店前 · 晨会',
+    icon: '🌅',
+    items: [
+      { t: '看昨日销售数据（15分钟曲线），找哪个时段掉', d: '定今日主推款和补货重点，不是凭感觉' },
+      { t: '抽查员工商品知识（面料、版型、搭配）', d: '全员懂商品，不是只背吊牌' },
+      { t: '手指扫货架查灰，甚至趴下扫底板', d: '有灰即不合格，5S 里「清扫」是硬标准' },
+      { t: '查照明、宣传品合规、店员着装统一', d: '细节即标准，顾客一眼就感受得到' }
+    ]
+  },
+  {
+    time: '营业中 · 15分钟粒度',
+    icon: '🕘',
+    items: [
+      { t: '每 15 分钟看销售进度', d: '判断「到几点完成百分之几才达标」，不达标就调员工休息时间' },
+      { t: '卖场巡查：无空衣架、叠装豆腐块、色阶排列', d: '仓储式卖场，乱一点就显廉价' },
+      { t: '试衣间管理：按件数发牌、顾客不要的衣服叠好送回', d: '试衣间是转化的最后一关' },
+      { t: '收银台状态：台面整洁无杂物', d: '清闲时去仓库装针，人不能空闲' },
+      { t: '补货 / 拣货：RFID 整筐识别、系统自动补货', d: '爆款 48h 从 B 级升 SA 级，触发紧急补单' }
+    ]
+  },
+  {
+    time: '闭店后 · 收尾',
+    icon: '🌙',
+    items: [
+      { t: '叠装「豆腐块」/ A 整', d: '叠不好重新叠，这是优衣库的门面' },
+      { t: '库存盘点（RFID 电子标签，系统承接）', d: '消除逐件扫描的低效动作' },
+      { t: '确认明日补货指令', d: '系统按「天气 + 历史数据 + 商圈特征」自动生成' },
+      { t: '交当日本子给领导盖戳', d: '当日闭环才算结束' }
+    ]
+  }
+];
+
+const shiftList = document.getElementById('shiftList');
+let totalItems = 0;
+
+shiftData.forEach(shift => {
+  const sh = document.createElement('div');
+  sh.className = 'shift';
+  let head = `<div class="sh-head"><span class="ico">${shift.icon}</span><span>${shift.time}</span></div>`;
+  shift.items.forEach((item) => {
+    const idx = totalItems++;
+    head += `
+      <div class="shift-item" data-i="${idx}">
+        <input type="checkbox" id="sh${idx}">
+        <div class="si-main">
+          <div class="si-t">${escapeHtml(item.t)}</div>
+          <div class="si-d">${escapeHtml(item.d)}</div>
+        </div>
+      </div>`;
+  });
+  sh.innerHTML = head;
+  shiftList.appendChild(sh);
+});
+
+function updateProg() {
+  const checked = shiftList.querySelectorAll('input:checked').length;
+  document.getElementById('progText').textContent = checked + ' / ' + totalItems;
+  document.getElementById('progFill').style.width = (checked / totalItems * 100) + '%';
+}
+shiftList.addEventListener('change', (e) => {
+  if (e.target.tagName === 'INPUT') {
+    const item = e.target.closest('.shift-item');
+    item.classList.toggle('done', e.target.checked);
+    updateProg();
+  }
+});
+document.getElementById('progText').textContent = '0 / ' + totalItems;
+
+/* ===== Tab 切换 ===== */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.p).classList.add('active');
+  });
+});
+
+/* 初始化 */
+renderStrategies();
+</script>
+</body>
+</html>
